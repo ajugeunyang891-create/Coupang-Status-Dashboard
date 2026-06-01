@@ -1,0 +1,39 @@
+name: 대시보드 자동 업데이트
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 레포 체크아웃
+        uses: actions/checkout@v4
+
+      - name: 🐍 Python 설치
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 📦 패키지 설치
+        run: |
+          pip install google-auth google-api-python-client \
+                      google-auth-httplib2 pandas openpyxl
+
+      - name: 🔑 서비스 계정 키 생성
+        run: |
+          echo '${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}' > service_account.json
+
+      - name: 🔄 대시보드 업데이트
+        run: python update_dashboard.py
+
+      - name: 📤 커밋 & 푸시
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet || git commit -m "🔄 대시보드 자동 업데이트 $(date '+%Y-%m-%d %H:%M KST')"
+          git push
