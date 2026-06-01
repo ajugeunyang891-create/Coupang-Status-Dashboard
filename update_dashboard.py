@@ -194,12 +194,22 @@ def parse_delivery_excel(content: bytes) -> pd.DataFrame:
 
     # , ,  
     # 컬럼명 유연하게 찾기
-    col_date = next((c for c in df.columns if "출고일" in c), None)
-    col_name = next((c for c in df.columns if "품명" in c), None)
-    col_qty  = next((c for c in df.columns if "수량" in c), None)
+    print("컬럼 목록:", list(df.columns))
+    col_date = next((c for c in df.columns if "출고일" in str(c)), None)
+    col_name = next((c for c in df.columns if "품명" in str(c)), None)
+    col_qty  = next((c for c in df.columns if str(c).strip() == "수량"), None)
+
+    # 납품일자/품목명/수량(개) 형식도 대응 (쿠팡_납품_및_재고현황.xlsx 납품 시트)
+    if not col_date:
+        col_date = next((c for c in df.columns if "납품일자" in str(c) or "주문일" in str(c)), None)
+    if not col_name:
+        col_name = next((c for c in df.columns if "품목명" in str(c) or "규격" in str(c)), None)
+    if not col_qty:
+        col_qty = next((c for c in df.columns if "수량" in str(c)), None)
+
+    print(f"날짜컬럼={col_date}, 품명컬럼={col_name}, 수량컬럼={col_qty}")
 
     if not all([col_date, col_name, col_qty]):
-        print("컬럼 목록:", list(df.columns))
         raise ValueError(f"필수 컬럼을 찾을 수 없습니다: 출고일={col_date}, 품명={col_name}, 수량={col_qty}")
 
     df = df[[col_date, col_name, col_qty]].copy()
