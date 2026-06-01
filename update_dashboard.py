@@ -193,7 +193,16 @@ def parse_delivery_excel(content: bytes) -> pd.DataFrame:
     df.columns = [str(c).strip() for c in df.columns]
 
     # , ,  
-    df = df[["", "  ", ""]].copy()
+    # 컬럼명 유연하게 찾기
+    col_date = next((c for c in df.columns if "출고일" in c), None)
+    col_name = next((c for c in df.columns if "품명" in c), None)
+    col_qty  = next((c for c in df.columns if "수량" in c), None)
+
+    if not all([col_date, col_name, col_qty]):
+        print("컬럼 목록:", list(df.columns))
+        raise ValueError(f"필수 컬럼을 찾을 수 없습니다: 출고일={col_date}, 품명={col_name}, 수량={col_qty}")
+
+    df = df[[col_date, col_name, col_qty]].copy()
     df.columns = ["date", "name", "qty"]
 
     #  
