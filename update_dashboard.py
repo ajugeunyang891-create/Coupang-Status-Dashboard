@@ -122,11 +122,22 @@ def get_drive_service():
 
 
 def list_files(service, folder_id):
+    """폴더 및 모든 하위 폴더의 파일을 재귀적으로 탐색"""
     results = service.files().list(
         q=f"'{folder_id}' in parents and trashed=false",
         fields="files(id, name, modifiedTime, mimeType)"
     ).execute()
-    return results.get("files", [])
+    files = results.get("files", [])
+
+    all_files = []
+    for f in files:
+        if f.get("mimeType") == "application/vnd.google-apps.folder":
+            sub_files = list_files(service, f["id"])
+            all_files.extend(sub_files)
+        else:
+            all_files.append(f)
+
+    return all_files
 
 
 def download_file(service, file_id) -> bytes:
